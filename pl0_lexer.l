@@ -8,6 +8,7 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <limits.h>
@@ -71,7 +72,6 @@ static void number2ast(unsigned int val)
 %}
 
  /* you can add actual definitions below */
-
 
  /* the rules section starts after the %% below */
 
@@ -201,6 +201,14 @@ void lexer_output()
 	if (t == YYEOF) {
 	    break;
         }
+    // Check for number values larger than INT_MAX
+    if (t == 259 && atol(yytext) > INT_MAX) {
+        unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("Number () is too large!") + 1);
+        char *buffer = malloc(buffer_size);
+        snprintf(buffer, buffer_size, "Number (%s) is too large!", yytext);
+        yyerror(filename, buffer);
+        free(buffer);
+    }
         lexer_print_token(t, yylineno, yytext);
     } while (t != YYEOF);
 }

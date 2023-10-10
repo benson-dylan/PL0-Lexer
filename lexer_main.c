@@ -12,5 +12,8 @@ int main(int argc, char *argv[])
     lexer_init(argv[1]);
 
     lexer_output();
+    
+    if (errors_noted)
+        return 1;
     return 0;
 }
