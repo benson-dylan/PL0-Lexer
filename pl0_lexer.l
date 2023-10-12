@@ -121,13 +121,13 @@ call { return callsym; }
 "(" { return lparensym; }
 ")" { return rparensym; }
 [\'] { }
-[ \t\n] { }
+[ \t\r\n] { }
 #.*\n { }
-.     { /*unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("invalid character : \'\'") + 1);
+.     { unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("invalid character : \'\' ()") + 2);
         char *buffer = malloc(buffer_size);
-        snprintf(buffer, buffer_size, "invalid character : \'%s\'", yytext);
+        snprintf(buffer, buffer_size, "invalid character : \'%s\' (\\%03o)", yytext, (unsigned int)yytext);
         yyerror(filename, buffer);
-        free(buffer);*/ }
+        free(buffer); }
 
 %% 
 
