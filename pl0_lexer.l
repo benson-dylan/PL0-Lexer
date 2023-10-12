@@ -96,7 +96,14 @@ write { return writesym; }
 call { return callsym; }
 
 [a-zA-Z_][a-zA-Z0-9_]* { return identsym; }
-[0-9]+ { return numbersym; }
+[0-9]+ { if (atol(yytext) > INT_MAX) {
+            unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("Number () is too large!") + 1);
+            char *buffer = malloc(buffer_size);
+            snprintf(buffer, buffer_size, "Number (%s) is too large!", yytext);
+            yyerror(filename, buffer);
+            free(buffer);
+        }
+        return numbersym; }
 ";" { return semisym; }
 ":=" { return becomessym; }
 "." { return periodsym; }
@@ -113,12 +120,14 @@ call { return callsym; }
 ">=" { return geqsym; }
 "(" { return lparensym; }
 ")" { return rparensym; }
-
-
-
-\n { }
+[\'] { }
+[ \t\n] { }
 #.*\n { }
-.      { }
+.     { /*unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("invalid character : \'\'") + 1);
+        char *buffer = malloc(buffer_size);
+        snprintf(buffer, buffer_size, "invalid character : \'%s\'", yytext);
+        yyerror(filename, buffer);
+        free(buffer);*/ }
 
 %% 
 
@@ -201,14 +210,7 @@ void lexer_output()
 	if (t == YYEOF) {
 	    break;
         }
-    // Check for number values larger than INT_MAX
-    if (t == 259 && atol(yytext) > INT_MAX) {
-        unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("Number () is too large!") + 1);
-        char *buffer = malloc(buffer_size);
-        snprintf(buffer, buffer_size, "Number (%s) is too large!", yytext);
-        yyerror(filename, buffer);
-        free(buffer);
-    }
+    
         lexer_print_token(t, yylineno, yytext);
     } while (t != YYEOF);
 }
