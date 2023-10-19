@@ -73,56 +73,71 @@ static void number2ast(unsigned int val)
 
  /* you can add actual definitions below */
 
+DIGIT	        [0-9]
+NUMBER          (((0x)[0-9A-Fa-f]+)|{DIGIT}+)
+LETTER		    [_a-zA-Z]
+LETTERORDIGIT	({LETTER}|{DIGIT})
+IDENT		    {LETTER}({LETTERORDIGIT}*)
+NEWLINE         \n
+CR              \r
+EOL             ({NEWLINE}|({CR}{NEWLINE}))
+COMMENTSTART    #
+COMMENT         {COMMENTSTART}.*
+IGNORED         [ \t\v\f\r\n]
+
  /* the rules section starts after the %% below */
 
 %%
 
-# { }
+var             { tok2ast(varsym); return varsym; }
+skip            { tok2ast(skipsym); return skipsym; }
+const           { tok2ast(constsym); return constsym; }
+begin           { tok2ast(beginsym); return beginsym; }
+end             { tok2ast(endsym); return endsym; }
+procedure       { tok2ast(proceduresym); return proceduresym; }
+if              { tok2ast(ifsym); return ifsym; }
+else            { tok2ast(elsesym); return elsesym; }
+odd             { tok2ast(oddsym); return oddsym; }
+while           { tok2ast(whilesym); return whilesym; }
+then            { tok2ast(thensym); return thensym; }
+do              { tok2ast(dosym); return dosym; }
+read            { tok2ast(readsym); return readsym; }
+write           { tok2ast(writesym); return writesym; }
+call            { tok2ast(callsym); return callsym; }
 
-var { return varsym; }
-skip { return skipsym; }
-const { return constsym; }
-begin { return beginsym; }
-end { return endsym; }
-procedure { return proceduresym; }
-if { return ifsym; }
-else { return elsesym; }
-odd { return oddsym; }
-while { return whilesym; }
-then { return thensym; }
-do { return dosym; }
-read { return readsym; }
-write { return writesym; }
-call { return callsym; }
+{IDENT}         { ident2ast(yytext); return identsym; }
 
-[a-zA-Z_][a-zA-Z0-9_]* { return identsym; }
-[0-9]+ { if (atol(yytext) > INT_MAX) {
+{NUMBER}    { if (atol(yytext) > INT_MAX) {
             unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("Number () is too large!") + 1);
             char *buffer = malloc(buffer_size);
             snprintf(buffer, buffer_size, "Number (%s) is too large!", yytext);
             yyerror(filename, buffer);
             free(buffer);
-        }
-        return numbersym; }
-";" { return semisym; }
-":=" { return becomessym; }
-"." { return periodsym; }
-"+" { return plussym; }
-"-" { return minussym; }
-"*" { return multsym; }
-"/" { return divsym; }
-"," { return commasym; } 
-"=" { return eqsym; }
-"<" { return ltsym; }
-"<=" { return leqsym; }
-">" { return gtsym; }
-"<>" { return neqsym; }
-">=" { return geqsym; }
-"(" { return lparensym; }
-")" { return rparensym; }
+            }
+            return numbersym; }
+
+\;              { tok2ast(semisym); return semisym; }
+\:=             { tok2ast(becomessym); return becomessym; }
+\.              { tok2ast(periodsym); return periodsym; }
+\+              { tok2ast(plussym); return plussym; }
+\-              { tok2ast(minussym); return minussym; }
+\*              { tok2ast(multsym); return multsym; }
+\/              { tok2ast(divsym); return divsym; }
+\,              { tok2ast(commasym); return commasym; } 
+\=              { tok2ast(eqsym); return eqsym; }   
+\<              { tok2ast(ltsym); return ltsym; }
+\<=             { tok2ast(leqsym); return leqsym; }
+\>              { tok2ast(gtsym); return gtsym; }
+\<>             { tok2ast(neqsym); return neqsym; }
+\>=             { tok2ast(geqsym); return geqsym; }
+\(              { tok2ast(lparensym); return lparensym; }
+\)              { tok2ast(rparensym); return rparensym; }
+
 [\'] { }
-[ \t\r\n] { }
-#.*\n { }
+{IGNORED}       { ; } 
+{COMMENT}       { ; }
+{EOL}           { ; }
+
 .     { unsigned long buffer_size = sizeof(char) * (strlen(yytext) + strlen("invalid character: \'\' (\'\\\')") + 4);
         char *buffer = malloc(buffer_size);
         snprintf(buffer, buffer_size, "invalid character: \'%s\' (\'\\%03o\')", yytext, yytext[0]);
